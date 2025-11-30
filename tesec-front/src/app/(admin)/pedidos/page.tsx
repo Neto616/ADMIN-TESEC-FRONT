@@ -12,7 +12,8 @@ import {
   Banknote, 
   ArrowRightLeft,
   FileText,
-  MoreHorizontal
+  MoreHorizontal,
+  X
 } from 'lucide-react';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
@@ -45,6 +46,7 @@ const pedidosData: Pedido[] = [
 export default function PedidosPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [showFilters, setShowFilters] = useState(false);
   const itemsPerPage = 5;
 
   const filteredPedidos = pedidosData.filter(pedido => 
@@ -101,7 +103,6 @@ export default function PedidosPage() {
           text: `El pedido ahora está: ${result.value}`,
           confirmButtonColor: '#000000'
         });
-
       }
     });
   };
@@ -125,35 +126,38 @@ export default function PedidosPage() {
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="space-y-4 md:space-y-6 p-4 md:p-0 animate-in fade-in slide-in-from-bottom-4 duration-500">
       
       {/* Título y Buscador */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div className="flex flex-col gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Gestión de Pedidos</h1>
-          <p className="text-gray-500 text-sm mt-1">Administra y da seguimiento a las órdenes de compra.</p>
+          <h1 className="text-xl md:text-2xl font-bold text-gray-900">Gestión de Pedidos</h1>
+          <p className="text-gray-500 text-xs md:text-sm mt-1">Administra y da seguimiento a las órdenes de compra.</p>
         </div>
 
-        <div className="flex gap-3 w-full md:w-auto">
-          <div className="relative flex-1 md:w-64">
+        <div className="flex gap-2 md:gap-3">
+          <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
             <input 
               type="text" 
-              placeholder="Buscar por ID o Cliente..." 
+              placeholder="Buscar pedido..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-100 focus:border-[#FF7A00] transition-all text-sm"
+              className="w-full pl-10 pr-4 py-2.5 md:py-2 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-100 focus:border-[#FF7A00] transition-all text-sm"
             />
           </div>
-          <button className="flex items-center gap-2 bg-white border border-gray-200 px-4 py-2 rounded-lg text-gray-600 hover:bg-gray-50 hover:text-[#FF7A00] transition-colors text-sm font-medium">
+          <button 
+            onClick={() => setShowFilters(!showFilters)}
+            className="flex items-center gap-2 bg-white border border-gray-200 px-3 md:px-4 py-2.5 md:py-2 rounded-lg text-gray-600 hover:bg-gray-50 hover:text-[#FF7A00] transition-colors text-sm font-medium"
+          >
             <Filter size={18} />
             <span className="hidden sm:inline">Filtros</span>
           </button>
         </div>
       </div>
 
-      {/* TABLA PRINCIPAL */}
-      <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+      {/* VISTA DESKTOP - Tabla */}
+      <div className="hidden md:block bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -193,18 +197,15 @@ export default function PedidosPage() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-end gap-2">
-                        {/* Botón: Ver Detalle / Recibo */}
                         <button 
                           onClick={() => handleVerDetalle(pedido)}
-                          className="p-2 text-gray-400 hover:text-[#FF7A00] hover:bg-orange-50 rounded-lg transition-colors tooltip-trigger relative group/btn"
+                          className="p-2 text-gray-400 hover:text-[#FF7A00] hover:bg-orange-50 rounded-lg transition-colors relative"
                           title="Ver Detalle"
                         >
                           <Eye size={18} />
-                          {/* Icono de Recibo si está finalizado */}
                           {pedido.estatus === 'Finalizado' && <FileText size={14} className="absolute -top-1 -right-1 text-gray-400" />}
                         </button>
 
-                        {/* Botón: Editar / Cambiar Estatus */}
                         <button 
                           onClick={() => handleCambiarEstatus(pedido)}
                           className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
@@ -230,7 +231,7 @@ export default function PedidosPage() {
           </table>
         </div>
 
-        {/* Paginación */}
+        {/* Paginación Desktop */}
         <div className="bg-white border-t border-gray-200 px-6 py-4 flex items-center justify-between">
           <p className="text-sm text-gray-500">
             Mostrando <span className="font-medium text-gray-900">{paginatedPedidos.length}</span> de <span className="font-medium text-gray-900">{filteredPedidos.length}</span> resultados
@@ -272,6 +273,125 @@ export default function PedidosPage() {
             </button>
           </div>
         </div>
+      </div>
+
+      {/* VISTA MÓVIL - Cards */}
+      <div className="md:hidden space-y-3">
+        {paginatedPedidos.length > 0 ? (
+          paginatedPedidos.map((pedido) => (
+            <div 
+              key={pedido.id} 
+              className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow"
+            >
+              {/* Header de la card */}
+              <div className="bg-gray-50 px-4 py-3 border-b border-gray-200 flex items-center justify-between">
+                <div>
+                  <span className="font-mono text-sm font-bold text-gray-900">{pedido.id}</span>
+                  <p className="text-xs text-gray-500 mt-0.5">{pedido.fecha}</p>
+                </div>
+                <span className={`px-2.5 py-1 rounded-full text-xs font-semibold border ${getEstatusColor(pedido.estatus)}`}>
+                  {pedido.estatus}
+                </span>
+              </div>
+
+              {/* Contenido de la card */}
+              <div className="p-4 space-y-3">
+                <div>
+                  <p className="text-xs text-gray-500 mb-1">Cliente</p>
+                  <p className="text-sm font-semibold text-gray-900">{pedido.cliente}</p>
+                </div>
+
+                {/* Método de pago y Total */}
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex-1">
+                    <p className="text-xs text-gray-500 mb-1">Método de Pago</p>
+                    <div className="flex items-center gap-2 text-sm text-gray-700 bg-gray-50 px-2.5 py-1.5 rounded-md border border-gray-100 w-fit">
+                      {getMetodoPagoIcon(pedido.metodoPago)}
+                      <span className="text-xs font-medium">{pedido.metodoPago}</span>
+                    </div>
+                  </div>
+
+                  <div className="text-right">
+                    <p className="text-xs text-gray-500 mb-1">Total</p>
+                    <p className="text-lg font-bold text-gray-900">
+                      ${pedido.total.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Botones de acción */}
+                <div className="flex gap-2 pt-2">
+                  <button 
+                    onClick={() => handleVerDetalle(pedido)}
+                    className="flex-1 flex items-center justify-center gap-2 bg-gray-50 hover:bg-orange-50 text-gray-700 hover:text-[#FF7A00] px-4 py-2.5 rounded-lg transition-colors font-medium text-sm border border-gray-200"
+                  >
+                    <Eye size={16} />
+                    Ver Detalle
+                  </button>
+                  <button 
+                    onClick={() => handleCambiarEstatus(pedido)}
+                    className="flex-1 flex items-center justify-center gap-2 bg-[#FF7A00] hover:bg-orange-600 text-white px-4 py-2.5 rounded-lg transition-colors font-medium text-sm shadow-sm"
+                  >
+                    <Edit3 size={16} />
+                    Cambiar
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))
+        ) : (
+          <div className="bg-white border border-gray-200 rounded-xl p-12 text-center">
+            <Search size={32} className="text-gray-300 mx-auto mb-3" />
+            <p className="text-gray-500 text-sm">No se encontraron pedidos</p>
+          </div>
+        )}
+
+        {/* Paginación Móvil */}
+        {paginatedPedidos.length > 0 && (
+          <div className="bg-white border border-gray-200 rounded-xl p-4 mt-4">
+            <p className="text-xs text-gray-500 text-center mb-3">
+              Mostrando {paginatedPedidos.length} de {filteredPedidos.length} resultados
+            </p>
+            
+            <div className="flex items-center justify-center gap-2">
+              <button 
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className="p-2 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                aria-label="Página anterior"
+                title="Página anterior"
+              >
+                <ChevronLeft size={18} />
+              </button>
+              
+              <div className="flex gap-1">
+                {Array.from({ length: totalPages }).map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setCurrentPage(i + 1)}
+                    className={`w-9 h-9 rounded-lg text-sm font-medium transition-colors ${
+                      currentPage === i + 1
+                        ? 'bg-[#FF7A00] text-white shadow-sm'
+                        : 'text-gray-600 hover:bg-gray-100'
+                    }`}
+                  >
+                    {i + 1}
+                  </button>
+                ))}
+              </div>
+
+              <button 
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+                className="p-2 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                aria-label="Siguiente página"
+                title="Siguiente página"
+              >
+                <ChevronRight size={18} />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
