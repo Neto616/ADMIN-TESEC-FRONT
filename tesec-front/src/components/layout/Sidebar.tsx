@@ -12,12 +12,12 @@ import {
   Truck, 
   Package, 
   LogOut,
-  ChevronRight
+  ChevronRight,
+  FileText 
 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
-// Función auxiliar para combinar clases tailwind
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
@@ -29,6 +29,7 @@ interface SidebarProps {
 
 const menuItems = [
   { name: 'Estado del negocio', path: '/estado-negocio', icon: LayoutDashboard },
+  { name: 'Cotizar', path: '/cotizar', icon: FileText },
   { name: 'Pedidos', path: '/pedidos', icon: ShoppingCart },
   { name: 'Usuarios', path: '/usuarios', icon: Users },
   { name: 'Clientes', path: '/clientes', icon: Briefcase },
