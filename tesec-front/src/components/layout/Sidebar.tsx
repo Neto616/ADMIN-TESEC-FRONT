@@ -1,8 +1,8 @@
 'use client';
 
-import React from 'react';
+import React, { useCallback } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   LayoutDashboard, 
@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { authService } from '@/services/authService';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -28,9 +29,10 @@ interface SidebarProps {
 }
 
 const menuItems = [
-  { name: 'Estado del negocio', path: '/estado-negocio', icon: LayoutDashboard },
+  // { name: 'Estado del negocio', path: '/estado-negocio', icon: LayoutDashboard },
   { name: 'Cotizar', path: '/cotizar', icon: FileText },
-  { name: 'Pedidos', path: '/pedidos', icon: ShoppingCart },
+  { name: 'Cotizaciones', path: '/cotizaciones', icon: FileText },
+  // { name: 'Pedidos', path: '/pedidos', icon: ShoppingCart },
   { name: 'Usuarios', path: '/usuarios', icon: Users },
   { name: 'Clientes', path: '/clientes', icon: Briefcase },
   { name: 'Proveedores', path: '/proveedores', icon: Truck },
@@ -39,6 +41,15 @@ const menuItems = [
 
 export default function Sidebar({ isOpen, toggleSidebar }: SidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
+  const onLogOut = useCallback(async  () => {
+  try {
+    await authService.logout();
+    router.push('/')
+  } catch (error) {
+    router.push('/');
+  }
+}, [router]);
 
   return (
     <>
@@ -110,7 +121,7 @@ export default function Sidebar({ isOpen, toggleSidebar }: SidebarProps) {
           {/* Botón Cerrar Sesión (Bottom) */}
           <div className="border-t border-gray-100 pt-4 mt-auto">
             <button
-              onClick={() => console.log('Cerrar sesión...')} 
+              onClick={onLogOut} 
               className="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors font-medium"
             >
               <LogOut size={20} />

@@ -1,24 +1,77 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Save, X, User, Mail, Phone, Shield, ArrowLeft } from 'lucide-react';
+import Swal from 'sweetalert2';
+import { catalogoService } from '@/services/catalogoService';
 
-interface UserFormProps {
-  initialData?: any; 
-  isEditing?: boolean;
-  onBack?: () => void;
-  onSubmit?: (data: any) => void;
+type UserFormProps = | {
+      isEditing: true;
+      initialData: any; 
+      onBack?: () => void;
+      onSubmit: (data: any, id: number) => void;
+    }
+  | {
+      isEditing?: false;
+      initialData?: any;
+      onBack?: () => void;
+      onSubmit: (data: any) => void;
+    };
+
+interface perfilesData {
+  value: number,
+  label: string
+}
+interface UserData {
+  nombre:    string,
+  apellidos: string,
+  email:     string,
+  password?: string,
+  perfil_id: number,
+  estatus: boolean|number
 }
 
-export default function UserForm({ initialData, isEditing = false, onBack, onSubmit }: UserFormProps) {
-  const [formData, setFormData] = useState({
+export default function UserForm({ initialData, isEditing, onBack, onSubmit }: UserFormProps) {
+  const [perfiles, setPerfiles] = useState<perfilesData[]>([]);
+  const [formData, setFormData] = useState<UserData>({
     nombre: initialData?.nombre || '',
     apellidos: initialData?.apellidos || '',
-    whatsapp: initialData?.whatsapp || '',
+    // whatsapp: initialData?.whatsapp || '',
     email: initialData?.email || '',
-    rol: initialData?.rol || 'Vendedor',
-    activo: initialData?.activo ?? true, 
+    perfil_id: initialData?.perfil_id || 1,
+    estatus: initialData?.estatus ?? true, 
   });
+
+  const perfilesFetch = useCallback(async () => {
+    try {
+      const perfiles = await catalogoService.getPerfiles();
+      setPerfiles(perfiles.response);
+    } catch (error: any) {
+      console.error('Error al crear proveedor:', error);
+      Swal.fire({
+        title: 'Error',
+        text: error.message || 'No se pudo obtener los perfiles. Intente de nuevo.',
+        icon: 'error',
+        confirmButtonColor: '#000000'
+      });
+    }
+  }, []);
+
+  useEffect(() => {
+    perfilesFetch();
+  }, [perfilesFetch]);
+
+  useEffect(() => {
+  if (initialData) {
+    setFormData({
+      nombre: initialData.nombre || '',
+      apellidos: initialData.apellidos || '',
+      email: initialData.email || '',
+      perfil_id: initialData.perfil_id || 1, 
+      estatus: initialData.estatus ?? true,
+    });
+  }
+}, [initialData]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -26,13 +79,16 @@ export default function UserForm({ initialData, isEditing = false, onBack, onSub
   };
 
   const handleToggleStatus = () => {
-    setFormData(prev => ({ ...prev, activo: !prev.activo }));
+    setFormData(prev => ({ ...prev, estatus: !prev.estatus }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (onSubmit) {
-      onSubmit(formData);
+      if(isEditing)
+        onSubmit(formData, initialData.id);
+      else
+        onSubmit(formData);
     } else {
       alert(isEditing ? 'Usuario Actualizado' : 'Usuario Creado');
     }
@@ -101,21 +157,6 @@ export default function UserForm({ initialData, isEditing = false, onBack, onSub
                   placeholder="Ej. Pérez"
                 />
               </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">WhatsApp / Teléfono</label>
-                <div className="relative">
-                  <Phone className="absolute left-3 top-3 md:top-2.5 text-gray-400" size={18} />
-                  <input 
-                    name="whatsapp" 
-                    value={formData.whatsapp} 
-                    onChange={handleChange}
-                    type="tel"
-                    className="w-full pl-10 pr-3 py-2.5 md:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF7A00] focus:border-transparent outline-none transition-all text-base"
-                    placeholder="55 1234 5678"
-                  />
-                </div>
-              </div>
             </div>
           </div>
 
@@ -153,16 +194,21 @@ export default function UserForm({ initialData, isEditing = false, onBack, onSub
                 
                 <select 
                   id="rol"           
-                  name="rol" 
-                  value={formData.rol} 
+                  name="perfil_id" 
+                  value={formData.perfil_id} 
                   onChange={handleChange}
                   aria-label="Seleccionar rol del sistema" 
                   className="w-full px-3 py-2.5 md:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF7A00] focus:border-transparent outline-none bg-white text-base"
                 >
-                  <option value="Admin">Administrador</option>
-                  <option value="Vendedor">Vendedor</option>
-                  <option value="Almacén">Almacén</option>
-                  <option value="Contador">Contador</option>
+                  {perfiles.length > 0 ? (
+                    perfiles.map((perfil) => (
+                    <option key={perfil.value} value={perfil.value}>
+                      {perfil.label}
+                    </option>
+                  ))
+                ) : (
+                  <option value={1}>Administrador</option>
+                )}
                 </select>
               </div>
 
@@ -172,14 +218,14 @@ export default function UserForm({ initialData, isEditing = false, onBack, onSub
                 <div 
                   onClick={handleToggleStatus}
                   className={`cursor-pointer border rounded-lg p-3 md:p-2.5 flex items-center justify-between transition-all ${
-                    formData.activo ? 'border-green-200 bg-green-50' : 'border-gray-200 bg-gray-50'
+                    formData.estatus ? 'border-green-200 bg-green-50' : 'border-gray-200 bg-gray-50'
                   }`}
                 >
-                  <span className={`text-sm font-medium ${formData.activo ? 'text-green-700' : 'text-gray-500'}`}>
-                    {formData.activo ? 'Usuario Activo' : 'Usuario Inactivo'}
+                  <span className={`text-sm font-medium ${formData.estatus ? 'text-green-700' : 'text-gray-500'}`}>
+                    {formData.estatus ? 'Usuario Activo' : 'Usuario Inactivo'}
                   </span>
-                  <div className={`w-11 h-6 md:w-10 md:h-5 rounded-full relative transition-colors ${formData.activo ? 'bg-green-500' : 'bg-gray-300'}`}>
-                    <div className={`absolute top-1 w-4 h-4 md:w-3 md:h-3 bg-white rounded-full transition-all shadow-sm ${formData.activo ? 'left-6 md:left-6' : 'left-1'}`}></div>
+                  <div className={`w-11 h-6 md:w-10 md:h-5 rounded-full relative transition-colors ${formData.estatus ? 'bg-green-500' : 'bg-gray-300'}`}>
+                    <div className={`absolute top-1 w-4 h-4 md:w-3 md:h-3 bg-white rounded-full transition-all shadow-sm ${formData.estatus ? 'left-6 md:left-6' : 'left-1'}`}></div>
                   </div>
                 </div>
               </div>
