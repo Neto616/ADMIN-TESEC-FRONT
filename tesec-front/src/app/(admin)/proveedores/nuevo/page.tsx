@@ -1,14 +1,18 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Swal from 'sweetalert2';
 import { ChevronLeft, Save, UploadCloud, Building, Mail, MapPin, Hash, Phone, X } from 'lucide-react';
+import { proveedorService } from '@/services/proveedorService';
 
 interface NuevoProveedorFormProps {
   onSubmit?: (data: any) => void;
 }
 
 export default function NuevoProveedorForm({ onSubmit }: NuevoProveedorFormProps) {
+  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [formData, setFormData] = useState({
@@ -20,16 +24,49 @@ export default function NuevoProveedorForm({ onSubmit }: NuevoProveedorFormProps
     logo: null as File | null
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async(e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    setTimeout(() => {
-      if (onSubmit) {
-        onSubmit(formData);
+    try {
+      // 1. Preparamos el FormData para el envío de archivos
+      const data = new FormData();
+      data.append('nombre', formData.nombre);
+      data.append('correo_contacto', formData.correo); 
+      data.append('telefono', formData.telefono);
+      data.append('rfc', formData.rfc);
+      data.append('direccion', formData.direccion);
+      data.append('estatus', '1'); 
+
+      if (formData.logo) {
+        data.append('logo', formData.logo);
       }
+
+      // 2. Llamamos al servicio
+      await proveedorService.crear(data);
+
+      // 3. Notificamos éxito
+      await Swal.fire({
+        title: '¡Registrado!',
+        text: 'El proveedor se ha guardado correctamente.',
+        icon: 'success',
+        confirmButtonColor: '#000000'
+      });
+
+      // 4. Redirigimos al listado
+      router.push('/proveedores');
+      
+    } catch (error: any) {
+      console.error('Error al crear proveedor:', error);
+      Swal.fire({
+        title: 'Error',
+        text: error.message || 'No se pudo registrar el proveedor. Intente de nuevo.',
+        icon: 'error',
+        confirmButtonColor: '#000000'
+      });
+    } finally {
       setIsSubmitting(false);
-    }, 1500);
+    }
   };
 
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {

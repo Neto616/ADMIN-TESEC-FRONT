@@ -1,18 +1,26 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { useParams } from 'next/navigation';
 import { ChevronLeft, Save, Building, Mail, MapPin, Phone, Upload, X, FileImage } from 'lucide-react';
+import { proveedorService } from '@/services/proveedorService';
+import Swal from 'sweetalert2';
+import { useRouter } from 'next/navigation';
 
 interface EditarProveedorFormProps {
-  providerId?: string;
+  providerId: number;
   onBack?: () => void;
   onSubmit?: (data: any) => void;
 }
 
 export default function EditarProveedorForm({ providerId, onBack, onSubmit }: EditarProveedorFormProps) {
+  const router = useRouter();
+  const params = useParams();
+  const id = Number(params.id);  
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   
+  // El nombre 'id' debe coincidir con el nombre de la carpeta [id]
   const [formData, setFormData] = useState({
     nombre: 'Cargando...',
     correo: '',
@@ -23,29 +31,69 @@ export default function EditarProveedorForm({ providerId, onBack, onSubmit }: Ed
   });
 
   useEffect(() => {
-    setTimeout(() => {
-      setFormData({
-        nombre: 'Hikvision Mexico',
-        correo: 'soporte@hikvision.com',
-        telefono: '55 8765 4321',
-        rfc: 'HIK890101AAA',
-        direccion: 'Av. Reforma 222, CDMX',
-        logo: null
-      });
-      setLogoPreview('https://placehold.co/200x200/e5e7eb/6b7280?text=Logo');
-    }, 500);
-  }, [providerId]);
+    const cargarProveedor = async () => {
+      if (!id) return;
+      try {
+        const data = await proveedorService.obtenerPorId(id);
+        const res = data.response; 
+        setFormData({
+          nombre: res.nombre || '',
+          correo: res.correo_contacto || '', 
+          telefono: res.telefono || '',
+          rfc: res.rfc || '',
+          direccion: res.direccion || '',
+          logo: null 
+        });
+        
+        if (res.imagen && res.imagen.url) {
+          setLogoPreview(res.imagen.url);
+        }
+      } catch (error) {
+        console.error("Error al cargar proveedor:", error);
+      }
+    };
 
-  const handleSubmit = (e: React.FormEvent) => {
+    cargarProveedor();
+  }, [params]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    setTimeout(() => {
-      if (onSubmit) {
-        onSubmit(formData);
+   try {
+      // Creamos el FormData para enviar archivos y textos
+      const dataToSend = new FormData();
+      dataToSend.append('nombre', formData.nombre);
+      dataToSend.append('correo', formData.correo);
+      dataToSend.append('telefono', formData.telefono);
+      dataToSend.append('rfc', formData.rfc);
+      dataToSend.append('direccion', formData.direccion);
+      
+      // Solo adjuntar logo si el usuario seleccionó uno nuevo
+      if (formData.logo) {
+        dataToSend.append('logo', formData.logo);
       }
+
+      await proveedorService.editar(id, dataToSend);
+      await Swal.fire({
+          title: '¡Registrado!',
+          text: 'El proveedor se ha guardado correctamente.',
+          icon: 'success',
+          confirmButtonColor: '#000000'
+        });
+  
+        router.push('/proveedores');
+    } catch (error: any) {
+      console.error("Error al actualizar:", error);
+      Swal.fire({
+        title: 'Error',
+        text: error.message || 'No se pudo registrar el proveedor. Intente de nuevo.',
+        icon: 'error',
+        confirmButtonColor: '#000000'
+      });
+    } finally {
       setIsSubmitting(false);
-    }, 1000);
+    }
   };
 
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -84,7 +132,7 @@ export default function EditarProveedorForm({ providerId, onBack, onSubmit }: Ed
 
       <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
         <div className="p-4 md:p-6 border-b border-gray-100 bg-orange-50/30">
-          <h1 className="text-lg md:text-xl font-bold text-gray-900">Editar Proveedor</h1>
+          <h1 className="text-lg md:text-xl font-bold text-gray-900">Editar Proveedor {providerId}</h1>
           <p className="text-gray-500 text-xs md:text-sm mt-1">Modifique los datos necesarios del proveedor.</p>
         </div>
         

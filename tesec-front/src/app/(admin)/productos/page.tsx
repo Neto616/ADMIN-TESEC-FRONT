@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { 
   Search, 
@@ -16,61 +16,49 @@ import {
   X
 } from 'lucide-react';
 import Swal from 'sweetalert2';
+import { productoService } from '@/services/productoService';
+import { Pagination } from '@/components/layout/Paginador';
+import { useDelete } from '@/hooks/DeleteHook';
 
 interface Producto {
-  id: string;
-  sku: string;
+  id: number;
   nombre: string;
+  sku: string;
+  marca: string;
+  link: string;
   precio: number;
-  stock: number;
-  categoria: string;
-  imagen?: string; 
-}
-
-const productosData: Producto[] = [
-  { id: '1', sku: 'TEC-001', nombre: 'Laptop Gamer Xtreme', precio: 25000.00, stock: 12, categoria: 'Electrónica' },
-  { id: '2', sku: 'TEC-002', nombre: 'Monitor 4K Ultra', precio: 8500.50, stock: 5, categoria: 'Monitores' },
-  { id: '3', sku: 'ACC-045', nombre: 'Teclado Mecánico RGB', precio: 1200.00, stock: 0, categoria: 'Accesorios' },
-  { id: '4', sku: 'MOV-102', nombre: 'Soporte Ergonómico', precio: 850.00, stock: 30, categoria: 'Mobiliario' },
-  { id: '5', sku: 'AUD-009', nombre: 'Auriculares Wireless', precio: 3400.00, stock: 8, categoria: 'Audio' },
-  { id: '6', sku: 'TEC-003', nombre: 'Mouse Gaming Pro', precio: 1500.00, stock: 15, categoria: 'Accesorios' },
-  { id: '7', sku: 'MON-050', nombre: 'Monitor Curvo 27"', precio: 6500.00, stock: 7, categoria: 'Monitores' },
-  { id: '8', sku: 'AUD-010', nombre: 'Micrófono USB', precio: 2200.00, stock: 10, categoria: 'Audio' },
-  { id: '9', sku: 'ACC-046', nombre: 'Webcam HD 1080p', precio: 1800.00, stock: 0, categoria: 'Accesorios' },
-];
+  precio_publico: number;
+  proveedores?: { nombre: string };
+  inventario?: { cantidad: number };
+  imagen?: { url: string }; 
+  estatus: number;
+};
 
 export default function ProductosPage() {
+  const [productosFetch, setProductosFetch] = useState<Producto[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [totalRecords, setTotalRecords] = useState(0);
+  const [lastPage, setLastPage] = useState(1);
+  const [openMenuId, setOpenMenuId] = useState<number | null>(null);
   const itemsPerPage = 8;
 
-  const filteredProductos = productosData.filter(p => 
-    p.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.sku.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const productFetch = useCallback(async (page: number) => {
+    try {
+      const response = await productoService.obtener({ page, per_page: itemsPerPage});
+      setProductosFetch(response.response.data);
+      setCurrentPage(response.response.current_page);
+      setLastPage(response.response.last_page);
+      setTotalRecords(response.response.total);
+    } catch (error) {}
+  }, []);
 
-  const totalPages = Math.ceil(filteredProductos.length / itemsPerPage);
-  const paginatedProductos = filteredProductos.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+  useEffect(() => {
+    productFetch(currentPage);
+  }, [productFetch, currentPage]);
 
-  const handleDelete = (id: string) => {
-    Swal.fire({
-      title: '¿Eliminar producto?',
-      text: "Esta acción no se puede deshacer.",
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#000000',
-      cancelButtonColor: '#d33',
-      confirmButtonText: 'Sí, eliminar',
-      cancelButtonText: 'Cancelar'
-    }).then((result) => {
-      if (result.isConfirmed) {
-        Swal.fire('Eliminado', 'El producto ha sido eliminado.', 'success');
-      }
-    });
+  const handleDelete = (id: number) => {
+    useDelete(id, () => productFetch(currentPage), (idToDelete) => productoService.eliminar(idToDelete));
     setOpenMenuId(null);
   };
 
@@ -93,41 +81,39 @@ export default function ProductosPage() {
         </Link>
       </div>
 
-      {/* FILTROS Y BÚSQUEDA */}
-      <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-          <input 
-            type="text" 
-            placeholder="Buscar producto..." 
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 md:py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-100 focus:border-[#FF7A00] transition-all text-sm"
-          />
-        </div>
-        <button className="flex items-center justify-center gap-2 px-4 py-2.5 md:py-2 border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors text-sm">
-          <Filter size={18} />
-          <span>Categoría</span>
-        </button>
-      </div>
-
       {/* Grid de Productos */}
-      {paginatedProductos.length > 0 ? (
+      {productosFetch.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-          {paginatedProductos.map((producto) => (
+          {productosFetch.map((producto) => (
             <div 
               key={producto.id} 
-              className="group bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col overflow-hidden"
+              className={`group rounded-xl border transition-all duration-300 flex flex-col overflow-hidden ${
+                producto.estatus === 0 
+                ? 'bg-gray-100 border-gray-300 grayscale opacity-80 shadow-none' 
+                : 'bg-white border-gray-200 shadow-sm hover:shadow-md'
+              }`}
             >
               {/* Imagen */}
               <div className="h-40 md:h-48 bg-gray-100 relative flex items-center justify-center overflow-hidden">
-                <Package size={48} className="text-gray-300 group-hover:scale-110 transition-transform duration-500" />
+                 {producto.imagen ? <img 
+                           className="w-full h-full object-contain"
+                           src={producto.imagen?.url} alt={producto.nombre} /> 
+                           : <Package size={48} className="text-gray-300 group-hover:scale-110 transition-transform duration-500" />
+                           }
+                
+                {/* Badge de Estatus Inactivo */}
+                {producto.estatus === 0 && (
+                  <div className="absolute top-3 left-3 bg-gray-600 text-white text-[10px] px-2 py-0.5 rounded font-bold uppercase z-10">
+                    Inactivo
+                  </div>
+                )}
                 
                 {/* Badge de Stock */}
                 <div className={`absolute top-3 right-3 px-2 py-1 rounded text-xs font-bold ${
-                  producto.stock > 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                  (producto.inventario?.cantidad ?? 0) > 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
                 }`}>
-                  {producto.stock > 0 ? `${producto.stock} en stock` : 'Agotado'}
+                  {(producto.inventario?.cantidad ?? 0)> 0 ? `${Number(producto.inventario?.cantidad).toLocaleString('es-MX', 
+                    { minimumFractionDigits: 2, maximumFractionDigits: 2 })} en stock` : 'Agotado'}
                 </div>
 
                 {/* Menú móvil - solo visible en móvil */}
@@ -178,17 +164,24 @@ export default function ProductosPage() {
                     #{producto.sku}
                   </span>
                   <span className="text-xs font-medium text-gray-500 flex items-center gap-1">
-                    <Tag size={12} /> {producto.categoria}
+                    <Tag size={12} /> {producto.marca}
                   </span>
                 </div>
                 
-                <h3 className="font-bold text-gray-900 line-clamp-2 mb-2 text-sm md:text-base group-hover:text-[#FF7A00] transition-colors">
+                <h3 className={`font-bold line-clamp-2 mb-2 text-sm md:text-base transition-colors ${
+                  producto.estatus === 0 ? 'text-gray-500' : 'text-gray-900 group-hover:text-[#FF7A00]'
+                }`}>
                   {producto.nombre}
                 </h3>
                 
                 <div className="mt-auto pt-4 border-t border-gray-50 flex items-center justify-between">
-                  <span className="text-lg md:text-xl font-bold text-gray-900">
-                    ${producto.precio.toLocaleString('es-MX')}
+                  <span className={`text-lg md:text-xl font-bold ${
+                    producto.estatus === 0 ? 'text-gray-400' : 'text-gray-900'
+                  }`}>
+                   ${Number(producto.precio).toLocaleString('es-MX', { 
+                        minimumFractionDigits: 2, 
+                        maximumFractionDigits: 2 
+                    })}
                   </span>
                 </div>
               </div>
@@ -221,51 +214,12 @@ export default function ProductosPage() {
       )}
 
       {/* Paginación */}
-      {paginatedProductos.length > 0 && totalPages > 1 && (
-        <div className="bg-white border border-gray-200 rounded-xl p-4 mt-6">
-          <p className="text-xs text-gray-500 text-center mb-3">
-            Mostrando {paginatedProductos.length} de {filteredProductos.length} productos
-          </p>
-          
-          <div className="flex items-center justify-center gap-2">
-            <button 
-              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
-              className="p-2 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              aria-label="Página anterior"
-              title="Página anterior"
-            >
-              <ChevronLeft size={18} />
-            </button>
-            
-            <div className="flex gap-1">
-              {Array.from({length: totalPages}, (_, i) => i + 1).map(page => (
-                <button
-                  key={page}
-                  onClick={() => setCurrentPage(page)}
-                  className={`w-9 h-9 rounded-lg text-sm font-medium transition-colors ${
-                    currentPage === page 
-                      ? 'bg-[#FF7A00] text-white shadow-sm' 
-                      : 'text-gray-600 hover:bg-gray-100'
-                  }`}
-                >
-                  {page}
-                </button>
-              ))}
-            </div>
-
-            <button 
-              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-              disabled={currentPage === totalPages}
-              className="p-2 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              aria-label="Siguiente página"
-              title="Siguiente página"
-            >
-              <ChevronRight size={18} />
-            </button>
-          </div>
-        </div>
-      )}
+      <Pagination
+        currentPage={currentPage}
+        lastPage={lastPage}
+        totalRecords={totalRecords}
+        onPageChange={(page) => setCurrentPage(page)}
+      />
     </div>
   );
 }

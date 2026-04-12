@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useEffectEvent, useState } from 'react';
+import { Pagination } from '@/components/layout/Paginador';
 import Link from 'next/link';
 import { 
   Search, 
@@ -16,35 +17,50 @@ import {
   ExternalLink
 } from 'lucide-react';
 import Swal from 'sweetalert2';
+import { proveedorService } from '@/services/proveedorService';
 
-const proveedoresData = [
-  { id: 'PROV-001', nombre: 'Dahua Technology', contacto: 'ventas@dahua.mx', telefono: '55 1234 5678', estatus: 'Activo' },
-  { id: 'PROV-002', nombre: 'Hikvision Mexico', contacto: 'soporte@hikvision.com', telefono: '55 8765 4321', estatus: 'Activo' },
-  { id: 'PROV-003', nombre: 'Cisco Systems', contacto: 'latam@cisco.com', telefono: '800 123 4567', estatus: 'Inactivo' },
-  { id: 'PROV-004', nombre: 'Ubiquiti Inc.', contacto: 'sales@ui.com', telefono: '1 408 999 999', estatus: 'Activo' },
-  { id: 'PROV-005', nombre: 'TP-Link México', contacto: 'info@tp-link.mx', telefono: '55 9876 5432', estatus: 'Activo' },
-  { id: 'PROV-006', nombre: 'D-Link Corporation', contacto: 'ventas@dlink.com.mx', telefono: '55 1122 3344', estatus: 'Activo' },
-];
+interface Proveedor {
+  id:number,
+  nombre:string,
+  correo_contacto?:string,
+  telefono:string,
+  imagen: null|{ url: string }
+  estatus: number
+}
+
+// const proveedoresData = [
+//   { id: 'PROV-001', nombre: 'Dahua Technology', contacto: 'ventas@dahua.mx', telefono: '55 1234 5678', estatus: 'Activo' },
+//   { id: 'PROV-002', nombre: 'Hikvision Mexico', contacto: 'soporte@hikvision.com', telefono: '55 8765 4321', estatus: 'Activo' },
+//   { id: 'PROV-003', nombre: 'Cisco Systems', contacto: 'latam@cisco.com', telefono: '800 123 4567', estatus: 'Inactivo' },
+//   { id: 'PROV-004', nombre: 'Ubiquiti Inc.', contacto: 'sales@ui.com', telefono: '1 408 999 999', estatus: 'Activo' },
+//   { id: 'PROV-005', nombre: 'TP-Link México', contacto: 'info@tp-link.mx', telefono: '55 9876 5432', estatus: 'Activo' },
+//   { id: 'PROV-006', nombre: 'D-Link Corporation', contacto: 'ventas@dlink.com.mx', telefono: '55 1122 3344', estatus: 'Activo' },
+// ];
 
 export default function ProveedoresPage() {
+  const [proveedores, setProveedores] = useState<Proveedor[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
-  const itemsPerPage = 5;
+  const [totalRecords, setTotalRecords] = useState(0);
+  const [openMenuId, setOpenMenuId] = useState<number | null>(null);
+  const [lastPage, setLastPage] = useState(1);
+  const itemsPerPage = 10;
 
-  const filteredProveedores = proveedoresData.filter(p => 
-    p.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.contacto.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.id.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const proveedoresFetch = useCallback(async (page:number = 1) => {
+    try {
+      const response = await proveedorService.obtener({page: page, per_page: itemsPerPage});
+      setProveedores(response.response.data);
+      setCurrentPage(response.response.current_page);
+      setLastPage(response.response.last_page);
+      setTotalRecords(response.response.total);
+    } catch (error) {}
+  }, []);
 
-  const totalPages = Math.ceil(filteredProveedores.length / itemsPerPage);
-  const paginatedProveedores = filteredProveedores.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+  useEffect(() => {
+    proveedoresFetch(currentPage)
+  }, [proveedoresFetch, currentPage])
 
-  const handleDelete = (nombre: string) => {
+  const handleDelete = (nombre: string, id: number) => {
     Swal.fire({
       title: '¿Eliminar proveedor?',
       text: `Se eliminará a "${nombre}" y no podrás revertir esta acción.`,
@@ -53,7 +69,15 @@ export default function ProveedoresPage() {
       confirmButtonColor: '#d33',
       cancelButtonColor: '#000000',
       confirmButtonText: 'Sí, eliminar',
-      cancelButtonText: 'Cancelar'
+      cancelButtonText: 'Cancelar',
+      preConfirm: async () => {
+        try{
+          await proveedorService.eliminar(id);
+          return await proveedoresFetch(currentPage);
+        }catch(error: any){
+          Swal.showValidationMessage(`Error: ${error.message || 'No se pudo eliminar'}`);
+        }
+      }
     }).then((result) => {
       if (result.isConfirmed) {
         Swal.fire({
@@ -84,7 +108,7 @@ export default function ProveedoresPage() {
       </div>
 
       {/* BÚSQUEDA */}
-      <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+      {/* <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
           <input 
@@ -95,9 +119,9 @@ export default function ProveedoresPage() {
             className="w-full pl-10 pr-4 py-2.5 md:py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-100 focus:border-[#FF7A00] transition-all text-sm"
           />
         </div>
-      </div>
+      </div> */}
 
-      {/* VISTA DESKTO */}
+      {/* VISTA DESKTOP */}
       <div className="hidden md:block bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
@@ -110,8 +134,8 @@ export default function ProveedoresPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {paginatedProveedores.length > 0 ? (
-                paginatedProveedores.map((item) => (
+              {totalRecords > 0 ? (
+                proveedores.map((item) => (
                   <tr key={item.id} className="hover:bg-orange-50/30 transition-colors">
                     
                     <td className="px-6 py-4 font-mono text-xs text-gray-500">
@@ -120,12 +144,14 @@ export default function ProveedoresPage() {
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <div className="w-12 h-12 bg-white border border-gray-200 rounded-lg flex items-center justify-center p-1 shadow-sm">
-                           <Building2 className="text-gray-300" size={24} />
+                           {item.imagen ? <img 
+                           className="w-full h-full object-contain"
+                           src={item.imagen?.url} alt={item.nombre} /> : <Building2 className="text-gray-300" size={24} />}
                         </div>
                         <div>
                           <p className="font-bold text-gray-900 text-sm">{item.nombre}</p>
-                          <span className={`text-[10px] px-2 py-0.5 rounded-full border ${item.estatus === 'Activo' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-gray-100 text-gray-500 border-gray-200'}`}>
-                            {item.estatus}
+                          <span className={`text-[10px] px-2 py-0.5 rounded-full border ${item.estatus === 1 ? 'bg-green-50 text-green-700 border-green-200' : 'bg-gray-100 text-gray-500 border-gray-200'}`}>
+                            {item.estatus === 1 ? 'Activo' : 'Inactivo'}
                           </span>
                         </div>
                       </div>
@@ -136,10 +162,10 @@ export default function ProveedoresPage() {
                       <div className="flex flex-col gap-1">
                         <div className="flex items-center gap-2 text-sm text-gray-600">
                           <Mail size={14} className="text-gray-400" />
-                          {item.contacto}
+                          {item.correo_contacto ?? 'No cuenta con correo'}
                         </div>
                         <div className="text-xs text-gray-400 pl-6">
-                          {item.telefono}
+                          {item.telefono ?? ''}
                         </div>
                       </div>
                     </td>
@@ -157,7 +183,7 @@ export default function ProveedoresPage() {
                         </Link>
                         
                         <button 
-                          onClick={() => handleDelete(item.nombre)}
+                          onClick={() => handleDelete(item.nombre, item.id)}
                           className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                           title="Eliminar"
                         >
@@ -180,52 +206,18 @@ export default function ProveedoresPage() {
         </div>
 
         {/* Paginación */}
-        <div className="bg-white border-t border-gray-200 px-6 py-4 flex items-center justify-between">
-          <span className="text-sm text-gray-500">
-            Mostrando {paginatedProveedores.length} de {filteredProveedores.length} resultados
-          </span>
-          <div className="flex gap-2">
-            <button 
-              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
-              className="p-2 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              aria-label="Página anterior"
-              title="Página anterior"
-            >
-              <ChevronLeft size={16} />
-            </button>
-            
-            {Array.from({length: totalPages}, (_, i) => i + 1).map(page => (
-              <button
-                key={page}
-                onClick={() => setCurrentPage(page)}
-                className={`w-8 h-8 rounded-lg text-sm font-medium ${
-                  currentPage === page 
-                    ? 'bg-[#FF7A00] text-white shadow-sm' 
-                    : 'text-gray-600 hover:bg-gray-100'
-                }`}
-              >
-                {page}
-              </button>
-            ))}
-            
-            <button 
-              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-              disabled={currentPage === totalPages}
-              className="p-2 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              aria-label="Siguiente página"
-              title="Siguiente página"
-            >
-              <ChevronRight size={16} />
-            </button>
-          </div>
-        </div>
+        <Pagination
+                currentPage={currentPage}
+                lastPage={lastPage}
+                totalRecords={totalRecords}
+                onPageChange={(page) => setCurrentPage(page)}
+              />
       </div>
 
       {/* VISTA MÓVIL */}
       <div className="md:hidden space-y-3">
-        {paginatedProveedores.length > 0 ? (
-          paginatedProveedores.map((item) => (
+        {totalRecords > 0 ? (
+          proveedores.map((item) => (
             <div 
               key={item.id} 
               className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow"
@@ -235,8 +227,8 @@ export default function ProveedoresPage() {
                   {item.id}
                 </span>
                 
-                <span className={`text-[10px] px-2.5 py-1 rounded-full border font-semibold ${item.estatus === 'Activo' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-gray-100 text-gray-500 border-gray-200'}`}>
-                  {item.estatus}
+                <span className={`text-[10px] px-2.5 py-1 rounded-full border font-semibold ${item.estatus === 1 ? 'bg-green-50 text-green-700 border-green-200' : 'bg-gray-100 text-gray-500 border-gray-200'}`}>
+                  {item.estatus === 1 ? 'Activo' : 'Inactivo'}
                 </span>
               </div>
 
@@ -277,7 +269,7 @@ export default function ProveedoresPage() {
                             </button>
                           </Link>
                           <button
-                            onClick={() => handleDelete(item.nombre)}
+                            onClick={() => handleDelete(item.nombre, item.id)}
                             className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors text-left border-t border-gray-100"
                           >
                             <Trash2 size={16} />
@@ -292,11 +284,11 @@ export default function ProveedoresPage() {
                 {/* Contactos */}
                 <div className="space-y-2 pt-2 border-t border-gray-100">
                   <a 
-                    href={`mailto:${item.contacto}`}
+                    href={`mailto:${item.correo_contacto}`}
                     className="flex items-center gap-2.5 text-sm text-gray-600 hover:text-[#FF7A00] transition-colors p-2 hover:bg-gray-50 rounded-lg"
                   >
                     <Mail size={16} className="text-gray-400 flex-shrink-0" />
-                    <span className="truncate">{item.contacto}</span>
+                    <span className="truncate">{item.correo_contacto}</span>
                   </a>
                 </div>
 
@@ -318,53 +310,13 @@ export default function ProveedoresPage() {
             <p className="text-gray-500 text-sm">No se encontraron proveedores</p>
           </div>
         )}
-
-        {/* Paginación */}
-        {paginatedProveedores.length > 0 && (
-          <div className="bg-white border border-gray-200 rounded-xl p-4 mt-4">
-            <p className="text-xs text-gray-500 text-center mb-3">
-              Mostrando {paginatedProveedores.length} de {filteredProveedores.length} resultados
-            </p>
-            
-            <div className="flex items-center justify-center gap-2">
-              <button 
-                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                disabled={currentPage === 1}
-                className="p-2 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                aria-label="Página anterior"
-                title="Página anterior"
-              >
-                <ChevronLeft size={18} />
-              </button>
-              
-              <div className="flex gap-1">
-                {Array.from({length: totalPages}, (_, i) => i + 1).map(page => (
-                  <button
-                    key={page}
-                    onClick={() => setCurrentPage(page)}
-                    className={`w-9 h-9 rounded-lg text-sm font-medium transition-colors ${
-                      currentPage === page 
-                        ? 'bg-[#FF7A00] text-white shadow-sm' 
-                        : 'text-gray-600 hover:bg-gray-100'
-                    }`}
-                  >
-                    {page}
-                  </button>
-                ))}
-              </div>
-
-              <button 
-                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                disabled={currentPage === totalPages}
-                className="p-2 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                aria-label="Siguiente página"
-                title="Siguiente página"
-              >
-                <ChevronRight size={18} />
-              </button>
-            </div>
-          </div>
-        )}
+        
+        <Pagination 
+          currentPage={currentPage}
+          lastPage={lastPage}
+          totalRecords={totalRecords}
+          onPageChange={(page) => setCurrentPage(page)}
+        />
       </div>
     </div>
   );

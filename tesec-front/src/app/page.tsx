@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { User, Lock, ArrowRight, Eye, EyeOff, ShieldCheck } from 'lucide-react';
 import Swal from 'sweetalert2';
+import { authService } from '@/services/authService';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -42,34 +43,35 @@ export default function LoginPage() {
       return;
     }
 
-    // Simulación de espera de red (1 segundo)
-    setTimeout(() => {
-      // ÉXITO 
-      if (formData.password.length > 0) { // Cualquier contraseña funciona 
-        const Toast = Swal.mixin({
-          toast: true,
-          position: 'top-end',
-          showConfirmButton: false,
-          timer: 2000,
-          timerProgressBar: true,
-          didOpen: (toast) => {
-            toast.addEventListener('mouseenter', Swal.stopTimer)
-            toast.addEventListener('mouseleave', Swal.resumeTimer)
-          }
-        });
+    try{
+      await authService.login({
+        email: formData.usuario, 
+        password: formData.password
+      });
 
-        Toast.fire({
-          icon: 'success',
-          title: 'Bienvenido a TESEC'
-        });
+      const Toast = Swal.mixin({
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 2000,
+        timerProgressBar: true,
+      });
 
-        // Redirección
-        router.push('/estado-negocio');
-      } else {
-        // ERROR 
-        setIsLoading(false);
-      }
-    }, 1000);
+      Toast.fire({
+        icon: 'success',
+        title: 'Bienvenido a TESEC'
+      });
+
+      router.push('/cotizar');
+    }catch (error: any) {
+      setIsLoading(false);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error de acceso',
+        text: error.message || 'Credenciales incorrectas o usuario inactivo.',
+        confirmButtonColor: '#000000'
+      });
+    }
   };
 
   return (
