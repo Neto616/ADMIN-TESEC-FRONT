@@ -1,31 +1,29 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import { 
-  Search, 
-  Filter, 
-  Eye, 
-  Edit3, 
-  ChevronLeft, 
-  ChevronRight, 
-  CreditCard, 
-  Banknote, 
+import React, { useState } from "react";
+import {
+  Search,
+  Filter,
+  Eye,
+  Edit3,
+  ChevronLeft,
+  ChevronRight,
+  CreditCard,
+  Banknote,
   ArrowRightLeft,
   FileText,
-  MoreHorizontal,
-  X
-} from 'lucide-react';
-import Swal from 'sweetalert2';
-import withReactContent from 'sweetalert2-react-content';
+} from "lucide-react";
+import Swal from "sweetalert2";
+import withReactContent from "sweetalert2-react-content";
 
 const MySwal = withReactContent(Swal);
 
 // TIPOS DE DATO
-type EstatusPedido = 'Pendiente' | 'Aprobado' | 'Finalizado' | 'Cancelado';
-type MetodoPago = 'Efectivo' | 'Tarjeta' | 'Transferencia';
+type EstatusPedido = "Pendiente" | "Aprobado" | "Finalizado" | "Cancelado";
+type MetodoPago = "Efectivo" | "Tarjeta" | "Transferencia";
 
 interface Pedido {
-  id: string; 
+  id: string;
   cliente: string;
   metodoPago: MetodoPago;
   estatus: EstatusPedido;
@@ -35,29 +33,72 @@ interface Pedido {
 
 // ejemplo
 const pedidosData: Pedido[] = [
-  { id: 'ORD-001', cliente: 'Juan Pérez', metodoPago: 'Efectivo', estatus: 'Pendiente', total: 1500.00, fecha: '29/11/2025' },
-  { id: 'ORD-002', cliente: 'Empresa ABC', metodoPago: 'Transferencia', estatus: 'Aprobado', total: 12450.50, fecha: '28/11/2025' },
-  { id: 'ORD-003', cliente: 'Maria López', metodoPago: 'Tarjeta', estatus: 'Finalizado', total: 890.00, fecha: '28/11/2025' },
-  { id: 'ORD-004', cliente: 'Carlos Ruiz', metodoPago: 'Efectivo', estatus: 'Pendiente', total: 320.00, fecha: '27/11/2025' },
-  { id: 'ORD-005', cliente: 'Tech Solutions', metodoPago: 'Transferencia', estatus: 'Finalizado', total: 5600.00, fecha: '26/11/2025' },
-  { id: 'ORD-006', cliente: 'Ana García', metodoPago: 'Tarjeta', estatus: 'Cancelado', total: 1200.00, fecha: '25/11/2025' },
+  {
+    id: "ORD-001",
+    cliente: "Juan Pérez",
+    metodoPago: "Efectivo",
+    estatus: "Pendiente",
+    total: 1500.0,
+    fecha: "29/11/2025",
+  },
+  {
+    id: "ORD-002",
+    cliente: "Empresa ABC",
+    metodoPago: "Transferencia",
+    estatus: "Aprobado",
+    total: 12450.5,
+    fecha: "28/11/2025",
+  },
+  {
+    id: "ORD-003",
+    cliente: "Maria López",
+    metodoPago: "Tarjeta",
+    estatus: "Finalizado",
+    total: 890.0,
+    fecha: "28/11/2025",
+  },
+  {
+    id: "ORD-004",
+    cliente: "Carlos Ruiz",
+    metodoPago: "Efectivo",
+    estatus: "Pendiente",
+    total: 320.0,
+    fecha: "27/11/2025",
+  },
+  {
+    id: "ORD-005",
+    cliente: "Tech Solutions",
+    metodoPago: "Transferencia",
+    estatus: "Finalizado",
+    total: 5600.0,
+    fecha: "26/11/2025",
+  },
+  {
+    id: "ORD-006",
+    cliente: "Ana García",
+    metodoPago: "Tarjeta",
+    estatus: "Cancelado",
+    total: 1200.0,
+    fecha: "25/11/2025",
+  },
 ];
 
 export default function PedidosPage() {
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [showFilters, setShowFilters] = useState(false);
   const itemsPerPage = 5;
 
-  const filteredPedidos = pedidosData.filter(pedido => 
-    pedido.cliente.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    pedido.id.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredPedidos = pedidosData.filter(
+    (pedido) =>
+      pedido.cliente.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      pedido.id.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   const totalPages = Math.ceil(filteredPedidos.length / itemsPerPage);
   const paginatedPedidos = filteredPedidos.slice(
-    (currentPage - 1) * itemsPerPage, 
-    currentPage * itemsPerPage
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage,
   );
 
   const handleVerDetalle = (pedido: Pedido) => {
@@ -73,35 +114,35 @@ export default function PedidosPage() {
         </div>
       `,
       showConfirmButton: true,
-      confirmButtonColor: '#000000',
-      confirmButtonText: 'Cerrar'
+      confirmButtonColor: "#000000",
+      confirmButtonText: "Cerrar",
     });
   };
 
   const handleCambiarEstatus = (pedido: Pedido) => {
     MySwal.fire({
-      title: 'Actualizar Estatus',
+      title: "Actualizar Estatus",
       text: `Cambiar estatus para el pedido ${pedido.id}`,
-      input: 'select',
+      input: "select",
       inputOptions: {
-        'Pendiente': 'Pendiente',
-        'Aprobado': 'Aprobado',
-        'Finalizado': 'Finalizado',
-        'Cancelado': 'Cancelado'
+        Pendiente: "Pendiente",
+        Aprobado: "Aprobado",
+        Finalizado: "Finalizado",
+        Cancelado: "Cancelado",
       },
       inputValue: pedido.estatus,
       showCancelButton: true,
-      confirmButtonColor: '#FF7A00',
-      cancelButtonColor: '#000000',
-      confirmButtonText: 'Guardar Cambio',
-      cancelButtonText: 'Cancelar'
+      confirmButtonColor: "#FF7A00",
+      cancelButtonColor: "#000000",
+      confirmButtonText: "Guardar Cambio",
+      cancelButtonText: "Cancelar",
     }).then((result) => {
       if (result.isConfirmed) {
         MySwal.fire({
-          icon: 'success',
-          title: 'Actualizado',
+          icon: "success",
+          title: "Actualizado",
           text: `El pedido ahora está: ${result.value}`,
-          confirmButtonColor: '#000000'
+          confirmButtonColor: "#000000",
         });
       }
     });
@@ -109,44 +150,58 @@ export default function PedidosPage() {
 
   const getEstatusColor = (estatus: EstatusPedido) => {
     switch (estatus) {
-      case 'Pendiente': return 'bg-yellow-50 text-yellow-700 border-yellow-200';
-      case 'Aprobado': return 'bg-blue-50 text-blue-700 border-blue-200';
-      case 'Finalizado': return 'bg-green-50 text-green-700 border-green-200';
-      case 'Cancelado': return 'bg-red-50 text-red-700 border-red-200';
-      default: return 'bg-gray-50 text-gray-700 border-gray-200';
+      case "Pendiente":
+        return "bg-yellow-50 text-yellow-700 border-yellow-200";
+      case "Aprobado":
+        return "bg-blue-50 text-blue-700 border-blue-200";
+      case "Finalizado":
+        return "bg-green-50 text-green-700 border-green-200";
+      case "Cancelado":
+        return "bg-red-50 text-red-700 border-red-200";
+      default:
+        return "bg-gray-50 text-gray-700 border-gray-200";
     }
   };
 
   const getMetodoPagoIcon = (metodo: MetodoPago) => {
     switch (metodo) {
-      case 'Efectivo': return <Banknote size={16} className="text-green-600" />;
-      case 'Tarjeta': return <CreditCard size={16} className="text-purple-600" />;
-      case 'Transferencia': return <ArrowRightLeft size={16} className="text-blue-600" />;
+      case "Efectivo":
+        return <Banknote size={16} className="text-green-600" />;
+      case "Tarjeta":
+        return <CreditCard size={16} className="text-purple-600" />;
+      case "Transferencia":
+        return <ArrowRightLeft size={16} className="text-blue-600" />;
     }
   };
 
   return (
     <div className="space-y-4 md:space-y-6 p-4 md:p-0 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      
       {/* Título y Buscador */}
       <div className="flex flex-col gap-4">
         <div>
-          <h1 className="text-xl md:text-2xl font-bold text-gray-900">Gestión de Pedidos</h1>
-          <p className="text-gray-500 text-xs md:text-sm mt-1">Administra y da seguimiento a las órdenes de compra.</p>
+          <h1 className="text-xl md:text-2xl font-bold text-gray-900">
+            Gestión de Pedidos
+          </h1>
+          <p className="text-gray-500 text-xs md:text-sm mt-1">
+            Administra y da seguimiento a las órdenes de compra.
+          </p>
         </div>
 
         <div className="flex gap-2 md:gap-3">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-            <input 
-              type="text" 
-              placeholder="Buscar pedido..." 
+            <Search
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+              size={18}
+            />
+            <input
+              type="text"
+              placeholder="Buscar pedido..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2.5 md:py-2 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-100 focus:border-[#FF7A00] transition-all text-sm"
             />
           </div>
-          <button 
+          <button
             onClick={() => setShowFilters(!showFilters)}
             className="flex items-center gap-2 bg-white border border-gray-200 px-3 md:px-4 py-2.5 md:py-2 rounded-lg text-gray-600 hover:bg-gray-50 hover:text-[#FF7A00] transition-colors text-sm font-medium"
           >
@@ -173,10 +228,17 @@ export default function PedidosPage() {
             <tbody className="divide-y divide-gray-100">
               {paginatedPedidos.length > 0 ? (
                 paginatedPedidos.map((pedido) => (
-                  <tr key={pedido.id} className="hover:bg-orange-50/30 transition-colors group">
+                  <tr
+                    key={pedido.id}
+                    className="hover:bg-orange-50/30 transition-colors group"
+                  >
                     <td className="px-6 py-4">
-                      <span className="font-mono text-sm font-medium text-gray-900">{pedido.id}</span>
-                      <p className="text-xs text-gray-400 mt-0.5">{pedido.fecha}</p>
+                      <span className="font-mono text-sm font-medium text-gray-900">
+                        {pedido.id}
+                      </span>
+                      <p className="text-xs text-gray-400 mt-0.5">
+                        {pedido.fecha}
+                      </p>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-700 font-medium">
                       {pedido.cliente}
@@ -188,25 +250,35 @@ export default function PedidosPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4 text-sm font-bold text-gray-900">
-                      ${pedido.total.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                      $
+                      {pedido.total.toLocaleString("es-MX", {
+                        minimumFractionDigits: 2,
+                      })}
                     </td>
                     <td className="px-6 py-4">
-                      <span className={`px-2.5 py-1 rounded-full text-xs font-semibold border ${getEstatusColor(pedido.estatus)}`}>
+                      <span
+                        className={`px-2.5 py-1 rounded-full text-xs font-semibold border ${getEstatusColor(pedido.estatus)}`}
+                      >
                         {pedido.estatus}
                       </span>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-end gap-2">
-                        <button 
+                        <button
                           onClick={() => handleVerDetalle(pedido)}
                           className="p-2 text-gray-400 hover:text-[#FF7A00] hover:bg-orange-50 rounded-lg transition-colors relative"
                           title="Ver Detalle"
                         >
                           <Eye size={18} />
-                          {pedido.estatus === 'Finalizado' && <FileText size={14} className="absolute -top-1 -right-1 text-gray-400" />}
+                          {pedido.estatus === "Finalizado" && (
+                            <FileText
+                              size={14}
+                              className="absolute -top-1 -right-1 text-gray-400"
+                            />
+                          )}
                         </button>
 
-                        <button 
+                        <button
                           onClick={() => handleCambiarEstatus(pedido)}
                           className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                           title="Cambiar Estatus"
@@ -219,7 +291,10 @@ export default function PedidosPage() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
+                  <td
+                    colSpan={6}
+                    className="px-6 py-12 text-center text-gray-500"
+                  >
                     <div className="flex flex-col items-center gap-2">
                       <Search size={32} className="text-gray-300 mb-2" />
                       <p>No se encontraron pedidos con ese criterio.</p>
@@ -234,12 +309,20 @@ export default function PedidosPage() {
         {/* Paginación Desktop */}
         <div className="bg-white border-t border-gray-200 px-6 py-4 flex items-center justify-between">
           <p className="text-sm text-gray-500">
-            Mostrando <span className="font-medium text-gray-900">{paginatedPedidos.length}</span> de <span className="font-medium text-gray-900">{filteredPedidos.length}</span> resultados
+            Mostrando{" "}
+            <span className="font-medium text-gray-900">
+              {paginatedPedidos.length}
+            </span>{" "}
+            de{" "}
+            <span className="font-medium text-gray-900">
+              {filteredPedidos.length}
+            </span>{" "}
+            resultados
           </p>
-          
+
           <div className="flex items-center gap-2">
-            <button 
-              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+            <button
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
               disabled={currentPage === 1}
               className="p-2 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               aria-label="Página anterior"
@@ -247,23 +330,25 @@ export default function PedidosPage() {
             >
               <ChevronLeft size={16} />
             </button>
-            
+
             {Array.from({ length: totalPages }).map((_, i) => (
               <button
                 key={i}
                 onClick={() => setCurrentPage(i + 1)}
                 className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${
                   currentPage === i + 1
-                    ? 'bg-[#FF7A00] text-white shadow-sm shadow-orange-200'
-                    : 'text-gray-600 hover:bg-gray-100'
+                    ? "bg-[#FF7A00] text-white shadow-sm shadow-orange-200"
+                    : "text-gray-600 hover:bg-gray-100"
                 }`}
               >
                 {i + 1}
               </button>
             ))}
 
-            <button 
-              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+            <button
+              onClick={() =>
+                setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+              }
               disabled={currentPage === totalPages}
               className="p-2 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               aria-label="Siguiente página"
@@ -279,17 +364,21 @@ export default function PedidosPage() {
       <div className="md:hidden space-y-3">
         {paginatedPedidos.length > 0 ? (
           paginatedPedidos.map((pedido) => (
-            <div 
-              key={pedido.id} 
+            <div
+              key={pedido.id}
               className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow"
             >
               {/* Header de la card */}
               <div className="bg-gray-50 px-4 py-3 border-b border-gray-200 flex items-center justify-between">
                 <div>
-                  <span className="font-mono text-sm font-bold text-gray-900">{pedido.id}</span>
+                  <span className="font-mono text-sm font-bold text-gray-900">
+                    {pedido.id}
+                  </span>
                   <p className="text-xs text-gray-500 mt-0.5">{pedido.fecha}</p>
                 </div>
-                <span className={`px-2.5 py-1 rounded-full text-xs font-semibold border ${getEstatusColor(pedido.estatus)}`}>
+                <span
+                  className={`px-2.5 py-1 rounded-full text-xs font-semibold border ${getEstatusColor(pedido.estatus)}`}
+                >
                   {pedido.estatus}
                 </span>
               </div>
@@ -298,7 +387,9 @@ export default function PedidosPage() {
               <div className="p-4 space-y-3">
                 <div>
                   <p className="text-xs text-gray-500 mb-1">Cliente</p>
-                  <p className="text-sm font-semibold text-gray-900">{pedido.cliente}</p>
+                  <p className="text-sm font-semibold text-gray-900">
+                    {pedido.cliente}
+                  </p>
                 </div>
 
                 {/* Método de pago y Total */}
@@ -307,28 +398,33 @@ export default function PedidosPage() {
                     <p className="text-xs text-gray-500 mb-1">Método de Pago</p>
                     <div className="flex items-center gap-2 text-sm text-gray-700 bg-gray-50 px-2.5 py-1.5 rounded-md border border-gray-100 w-fit">
                       {getMetodoPagoIcon(pedido.metodoPago)}
-                      <span className="text-xs font-medium">{pedido.metodoPago}</span>
+                      <span className="text-xs font-medium">
+                        {pedido.metodoPago}
+                      </span>
                     </div>
                   </div>
 
                   <div className="text-right">
                     <p className="text-xs text-gray-500 mb-1">Total</p>
                     <p className="text-lg font-bold text-gray-900">
-                      ${pedido.total.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                      $
+                      {pedido.total.toLocaleString("es-MX", {
+                        minimumFractionDigits: 2,
+                      })}
                     </p>
                   </div>
                 </div>
 
                 {/* Botones de acción */}
                 <div className="flex gap-2 pt-2">
-                  <button 
+                  <button
                     onClick={() => handleVerDetalle(pedido)}
                     className="flex-1 flex items-center justify-center gap-2 bg-gray-50 hover:bg-orange-50 text-gray-700 hover:text-[#FF7A00] px-4 py-2.5 rounded-lg transition-colors font-medium text-sm border border-gray-200"
                   >
                     <Eye size={16} />
                     Ver Detalle
                   </button>
-                  <button 
+                  <button
                     onClick={() => handleCambiarEstatus(pedido)}
                     className="flex-1 flex items-center justify-center gap-2 bg-[#FF7A00] hover:bg-orange-600 text-white px-4 py-2.5 rounded-lg transition-colors font-medium text-sm shadow-sm"
                   >
@@ -350,12 +446,13 @@ export default function PedidosPage() {
         {paginatedPedidos.length > 0 && (
           <div className="bg-white border border-gray-200 rounded-xl p-4 mt-4">
             <p className="text-xs text-gray-500 text-center mb-3">
-              Mostrando {paginatedPedidos.length} de {filteredPedidos.length} resultados
+              Mostrando {paginatedPedidos.length} de {filteredPedidos.length}{" "}
+              resultados
             </p>
-            
+
             <div className="flex items-center justify-center gap-2">
-              <button 
-                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              <button
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
                 className="p-2 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 aria-label="Página anterior"
@@ -363,7 +460,7 @@ export default function PedidosPage() {
               >
                 <ChevronLeft size={18} />
               </button>
-              
+
               <div className="flex gap-1">
                 {Array.from({ length: totalPages }).map((_, i) => (
                   <button
@@ -371,8 +468,8 @@ export default function PedidosPage() {
                     onClick={() => setCurrentPage(i + 1)}
                     className={`w-9 h-9 rounded-lg text-sm font-medium transition-colors ${
                       currentPage === i + 1
-                        ? 'bg-[#FF7A00] text-white shadow-sm'
-                        : 'text-gray-600 hover:bg-gray-100'
+                        ? "bg-[#FF7A00] text-white shadow-sm"
+                        : "text-gray-600 hover:bg-gray-100"
                     }`}
                   >
                     {i + 1}
@@ -380,8 +477,10 @@ export default function PedidosPage() {
                 ))}
               </div>
 
-              <button 
-                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              <button
+                onClick={() =>
+                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                }
                 disabled={currentPage === totalPages}
                 className="p-2 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 aria-label="Siguiente página"

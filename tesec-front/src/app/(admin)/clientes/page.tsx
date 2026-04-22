@@ -1,68 +1,57 @@
-'use client';
+"use client";
 
-import React, { useCallback, useEffect, useState } from 'react';
-import { 
-  Search, 
-  Plus, 
-  Filter, 
-  MoreHorizontal, 
-  Mail, 
-  Phone, 
-  MessageCircle, 
-  ChevronLeft, 
-  ChevronRight, 
-  Download,
-  User,
+import { useEffect, useState } from "react";
+import {
+  Search,
+  Plus,
+  MoreHorizontal,
+  Mail,
+  MessageCircle,
   ExternalLink,
-  Building2
-} from 'lucide-react';
-import Swal from 'sweetalert2';
-import withReactContent from 'sweetalert2-react-content';
-import Link from 'next/link';
-import { clienteService } from '@/services/clienteService';
-import { Pagination } from '@/components/layout/Paginador';
+} from "lucide-react";
+import Swal from "sweetalert2";
+import withReactContent from "sweetalert2-react-content";
+import Link from "next/link";
+import { clienteService } from "@/services/clienteService";
+import { Pagination } from "@/components/layout/Paginador";
 
 const MySwal = withReactContent(Swal);
 
 interface Cliente {
-  id: string; 
-  user: {nombre: string, apellidos: string, email: string, telefono: string}
+  id: string;
+  user: { nombre: string; apellidos: string; email: string; telefono: string };
 }
-
-// const clientesData: Cliente[] = [
-//   { id: 'CLI-001', nombre: 'Néstor López', correo: 'nestor@gmail.com', whatsapp: '8333134272', empresa: 'López Hnos', fechaRegistro: '01/12/2024' },
-//   { id: 'CLI-002', nombre: 'Ivan Beltrán', correo: 'ivan@beltran.com', whatsapp: '5512345678', empresa: 'Tech Solutions', fechaRegistro: '30/11/2024' },
-//   { id: 'CLI-003', nombre: 'Maria González', correo: 'maria.g@hotmail.com', whatsapp: '8187654321', empresa: 'Consultoría MG', fechaRegistro: '29/11/2024' },
-//   { id: 'CLI-004', nombre: 'Empresa ABC S.A.', correo: 'contacto@abc.mx', whatsapp: '5544332211', fechaRegistro: '28/11/2024' },
-//   { id: 'CLI-005', nombre: 'Roberto Diaz', correo: 'roberto@outlook.com', whatsapp: '8331112233', empresa: 'Autos Diaz', fechaRegistro: '27/11/2024' },
-//   { id: 'CLI-006', nombre: 'Laura Mendez', correo: 'lmendez@gmail.com', whatsapp: '7778889999', fechaRegistro: '25/11/2024' },
-// ];
 
 export default function ClientesPage() {
   const [clientesFetch, setClientesFetch] = useState<Cliente[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
   const [lastPage, setLastPage] = useState(1);
-  const [searchTerm, setSearchTerm] = useState('');
+  // const [searchTerm, setSearchTerm] = useState("");
   const itemsPerPage = 10;
 
-  const clientFetch = useCallback(async (page: number) => {
-    try {
-      const response = await clienteService.obtener({ page, per_page: itemsPerPage });
-      setClientesFetch(response.response.data);
-      setCurrentPage(response.response.current_page);
-      setLastPage(response.response.last_page);
-      setTotalRecords(response.response.total);
-    } catch (error) {}
-  }, []);
-
   useEffect(() => {
-    clientFetch(currentPage);
-  }, []);
+    const getClient = async (page: number) => {
+      try {
+        const response = await clienteService.obtener({
+          page,
+          per_page: itemsPerPage,
+        });
+        setClientesFetch(response.response.data);
+        setCurrentPage(response.response.current_page);
+        setLastPage(response.response.last_page);
+        setTotalRecords(response.response.total);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+
+    getClient(currentPage);
+  }, [currentPage]);
 
   const handleOpenWhatsapp = (numero: string) => {
-    const cleanNumber = numero.replace(/\D/g, ''); 
-    window.open(`https://wa.me/52${cleanNumber}`, '_blank');
+    const cleanNumber = numero.replace(/\D/g, "");
+    window.open(`https://wa.me/52${cleanNumber}`, "_blank");
   };
 
   const handleVerDetalle = (cliente: Cliente) => {
@@ -74,7 +63,7 @@ export default function ClientesPage() {
           </div>
           <h2 class="text-2xl font-bold text-gray-800">${cliente.user.nombre}</h2>
           <p class="text-sm text-gray-500">${cliente.id}</p>
-          
+
           <div class="w-full bg-gray-50 rounded-lg p-4 mt-4 text-left space-y-3 border border-gray-100">
             <div class="flex items-center gap-3">
               <span class="p-2 bg-white rounded-md shadow-sm"><i class="text-gray-400">📧</i></span>
@@ -96,27 +85,30 @@ export default function ClientesPage() {
       showConfirmButton: false,
       showCloseButton: true,
       customClass: {
-        popup: 'rounded-2xl'
-      }
+        popup: "rounded-2xl",
+      },
     });
   };
-
 
   return (
     <div className="space-y-4 md:space-y-6 p-4 md:p-0 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-xl md:text-2xl font-bold text-gray-900">Cartera de Clientes</h1>
-          <p className="text-gray-500 text-xs md:text-sm mt-1">Directorio de clientes registrados en el sistema.</p>
+          <h1 className="text-xl md:text-2xl font-bold text-gray-900">
+            Cartera de Clientes
+          </h1>
+          <p className="text-gray-500 text-xs md:text-sm mt-1">
+            Directorio de clientes registrados en el sistema.
+          </p>
         </div>
-        
+
         <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
           {/* <button className="flex items-center justify-center gap-2 bg-white border border-gray-200 px-5 py-2.5 rounded-lg text-gray-600 hover:text-[#FF7A00] hover:border-orange-200 transition-all text-sm font-medium shadow-sm">
             <Download size={18} />
             Exportar
           </button> */}
-          
-          <Link 
+
+          <Link
             href="/clientes/nuevo"
             className="flex items-center justify-center gap-2 bg-black text-white px-5 py-2.5 rounded-lg hover:bg-[#FF7A00] transition-all font-medium shadow-md hover:shadow-lg transform hover:-translate-y-0.5 w-full md:w-auto"
           >
@@ -130,9 +122,9 @@ export default function ClientesPage() {
       {/* <div className="flex gap-3 bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-          <input 
-            type="text" 
-            placeholder="Buscar cliente..." 
+          <input
+            type="text"
+            placeholder="Buscar cliente..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-2.5 md:py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-100 focus:border-[#FF7A00] transition-all text-sm"
@@ -160,7 +152,10 @@ export default function ClientesPage() {
             <tbody className="divide-y divide-gray-100">
               {clientesFetch.length > 0 ? (
                 clientesFetch.map((cliente) => (
-                  <tr key={cliente.id} className="hover:bg-orange-50/30 transition-colors group">
+                  <tr
+                    key={cliente.id}
+                    className="hover:bg-orange-50/30 transition-colors group"
+                  >
                     <td className="px-6 py-4">
                       <span className="font-mono text-xs font-bold text-gray-500 bg-gray-100 px-2 py-1 rounded">
                         {cliente.id}
@@ -169,22 +164,32 @@ export default function ClientesPage() {
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-[#FF7A00] font-bold text-sm border border-white shadow-sm">
-                          {cliente.user.nombre.substring(0,2).toUpperCase()}
+                          {cliente.user.nombre.substring(0, 2).toUpperCase()}
                         </div>
                         <div>
-                          <p className="font-medium text-gray-900 text-sm">{cliente.user.nombre}</p>
+                          <p className="font-medium text-gray-900 text-sm">
+                            {cliente.user.nombre}
+                          </p>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="flex items-center gap-2 text-sm text-gray-600 group/mail cursor-pointer hover:text-[#FF7A00] transition-colors" title="Copiar correo">
-                        <Mail size={16} className="text-gray-400 group-hover/mail:text-[#FF7A00]" />
+                      <div
+                        className="flex items-center gap-2 text-sm text-gray-600 group/mail cursor-pointer hover:text-[#FF7A00] transition-colors"
+                        title="Copiar correo"
+                      >
+                        <Mail
+                          size={16}
+                          className="text-gray-400 group-hover/mail:text-[#FF7A00]"
+                        />
                         <span>{cliente.user.email}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <button 
-                        onClick={() => handleOpenWhatsapp(cliente.user.telefono)}
+                      <button
+                        onClick={() =>
+                          handleOpenWhatsapp(cliente.user.telefono)
+                        }
                         className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-50 text-green-700 text-xs font-bold border border-green-200 hover:bg-green-100 transition-colors"
                       >
                         <MessageCircle size={14} />
@@ -193,19 +198,22 @@ export default function ClientesPage() {
                       </button>
                     </td>
                     <td className="px-6 py-4 text-center">
-                       <button 
+                      <button
                         onClick={() => handleVerDetalle(cliente)}
                         className="p-2 text-gray-400 hover:text-[#FF7A00] hover:bg-orange-50 rounded-full transition-colors"
                         title="Ver detalles"
-                       >
-                         <MoreHorizontal size={20} />
-                       </button>
+                      >
+                        <MoreHorizontal size={20} />
+                      </button>
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
+                  <td
+                    colSpan={5}
+                    className="px-6 py-12 text-center text-gray-500"
+                  >
                     <Search size={32} className="text-gray-300 mx-auto mb-2" />
                     <p>No se encontraron clientes.</p>
                   </td>
@@ -228,8 +236,8 @@ export default function ClientesPage() {
       <div className="md:hidden space-y-3">
         {clientesFetch.length > 0 ? (
           clientesFetch.map((cliente) => (
-            <div 
-              key={cliente.id} 
+            <div
+              key={cliente.id}
               className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow"
             >
               {/* Header */}
@@ -237,7 +245,7 @@ export default function ClientesPage() {
                 <span className="font-mono text-xs font-bold text-gray-500 bg-white px-2 py-1 rounded border border-gray-200">
                   {cliente.id}
                 </span>
-                <button 
+                <button
                   onClick={() => handleVerDetalle(cliente)}
                   className="p-1.5 text-gray-400 hover:text-[#FF7A00] hover:bg-orange-50 rounded-lg transition-colors"
                   aria-label="Ver detalles"
@@ -252,18 +260,19 @@ export default function ClientesPage() {
                 {/* Cliente */}
                 <div className="flex items-start gap-3">
                   <div className="w-12 h-12 rounded-full bg-gradient-to-br from-orange-100 to-orange-50 flex items-center justify-center text-[#FF7A00] font-bold text-base border-2 border-orange-200 flex-shrink-0">
-                    {cliente.user.nombre.substring(0,2).toUpperCase()}
+                    {cliente.user.nombre.substring(0, 2).toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-gray-900 text-base truncate">{cliente.user.nombre}</p>
-
+                    <p className="font-semibold text-gray-900 text-base truncate">
+                      {cliente.user.nombre}
+                    </p>
                   </div>
                 </div>
 
                 {/* Contactos */}
                 <div className="space-y-2 pt-2 border-t border-gray-100">
                   {/* Email */}
-                  <a 
+                  <a
                     href={`mailto:${cliente.user.email}`}
                     className="flex items-center gap-2.5 text-sm text-gray-600 hover:text-[#FF7A00] transition-colors p-2 hover:bg-gray-50 rounded-lg"
                   >
@@ -272,7 +281,7 @@ export default function ClientesPage() {
                   </a>
 
                   {/* WhatsApp */}
-                  <button 
+                  <button
                     onClick={() => handleOpenWhatsapp(cliente.user.telefono)}
                     className="w-full flex items-center gap-2.5 text-sm p-2 bg-green-50 text-green-700 hover:bg-green-100 rounded-lg transition-colors border border-green-200"
                   >
