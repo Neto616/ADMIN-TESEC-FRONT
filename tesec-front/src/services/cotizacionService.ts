@@ -1,57 +1,84 @@
 import { apiFetch } from "./api";
 
-const endpoint = '/cotizaciones';
+const endpoint = "/cotizaciones";
 
 enum CotizacionEstatus {
-    'CANCELADO'  = 0,
-    'EN_PROCESO' = 1,
-    'FINALIZADO' = 2
-};
+  "CANCELADO" = 0,
+  "EN_PROCESO" = 1,
+  "FINALIZADO" = 2,
+}
+
+interface Producto {
+  id: string;
+  nombre: string;
+  sku: string;
+  marca: string;
+  link: string;
+  precio: number;
+  precio_publico: number;
+  proveedores?: { nombre: string };
+  inventario?: { cantidad: number };
+  imagen?: { url: string };
+  estatus: number;
+}
+
+interface ItemCotizacion extends Producto {
+  cantidad: number;
+}
 
 interface CotizacionData {
-    'titulo'?: string,
-    'id_cliente': number,
-    'productos': Array<any>
-};
+  titulo?: string;
+  id_cliente: number;
+  productos: Array<ItemCotizacion>;
+  useIVA: boolean;
+  useISR: boolean;
+}
 
 export const cotizacionService = {
-    async obtener(params: { page?: number; per_page?: number; busqueda?: string } = { page: 1, per_page: 10 }) {
-        const data = await apiFetch(`${endpoint}?page=${params.page}&per_page=${params.per_page}${params.busqueda ? `&busqueda=${params.busqueda}` : ''}`, {
-            method: 'GET'
-        });
-        console.log(data)
-        return data;
+  async obtener(
+    params: { page?: number; per_page?: number; busqueda?: string } = {
+      page: 1,
+      per_page: 10,
     },
-    async obtenerId(id: number){
+  ) {
+    const data = await apiFetch(
+      `${endpoint}?page=${params.page}&per_page=${params.per_page}${params.busqueda ? `&busqueda=${params.busqueda}` : ""}`,
+      {
+        method: "GET",
+      },
+    );
+    console.log(data);
+    return data;
+  },
+  async obtenerId(id: number) {
+    const data = await apiFetch(`${endpoint}/${id}`, {
+      method: "GET",
+    });
 
-        const data = await apiFetch(`${endpoint}/${id}`, {
-            method: 'GET'
-        });
+    console.log(data);
+    return data;
+  },
+  async crear(request: CotizacionData) {
+    const data = await apiFetch(`${endpoint}`, {
+      method: "POST",
+      body: JSON.stringify(request),
+    });
+    return data;
+  },
+  async editar(id: number, request: CotizacionData) {
+    const data = await apiFetch(`${endpoint}/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(request),
+    });
 
-        console.log(data);
-        return data;
-    },
-    async crear(request: CotizacionData) {
-        const data = await apiFetch(`${endpoint}`, {
-            method: 'POST',
-            body: JSON.stringify(request)
-        });
-        return data;
-    },
-    async editar(id: number, request: CotizacionData){
-        const data = await apiFetch(`${endpoint}/${id}`, {
-            method: 'PUT',
-            body: JSON.stringify(request)
-        });
+    return data;
+  },
+  async cambiarEstatus(id: number, estatus: CotizacionEstatus) {
+    const data = await apiFetch(`${endpoint}/editar-estatus/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ estatus: estatus }),
+    });
 
-        return data;
-    },
-    async cambiarEstatus(id: number, estatus: CotizacionEstatus) {
-        const data = await apiFetch(`${endpoint}/editar-estatus/${id}`, {
-            method: 'PATCH',
-            body: JSON.stringify({'estatus': estatus})
-        });
-
-        return data;
-    }
+    return data;
+  },
 };
