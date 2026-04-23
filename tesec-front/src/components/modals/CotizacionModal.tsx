@@ -28,20 +28,18 @@ interface Partida {
 }
 
 interface CotizacionResponse {
-  response: {
-    id: number;
-    uuid: string;
-    titulo: string;
-    consideraciones: string;
-    useIVA: boolean;
-    useISR: boolean;
-    estatus: number;
-    created_at: string;
-    partidas: Partida[];
-    clientes?: {
-      user: { nombre: string; apellidos: string; telefono: string } | null;
-    } | null;
-  };
+  id: number;
+  uuid: string;
+  titulo: string;
+  consideraciones: string;
+  useIVA: boolean;
+  useISR: boolean;
+  estatus: number;
+  created_at: string;
+  partidas: Partida[];
+  clientes: {
+    user: { nombre: string; apellidos: string; telefono: string };
+  } | null;
 }
 
 const CotizacionModal = ({
@@ -96,7 +94,7 @@ const CotizacionModal = ({
       const pdfHeight = (img.height * pdfWidth) / img.width;
       pdf.addImage(dataUrl, "PNG", 0, 0, pdfWidth, pdfHeight);
       const cliente =
-        `${data?.clientes?.user?.nombre ?? ""} ${data?.clientes?.user?.apellidos ?? ""}`
+        `${data?.clientes?.user.nombre ?? ""} ${data?.clientes?.user.apellidos ?? ""}`
           .trim()
           .replace(/\s+/g, "_") || "cliente";
       const ahora = new Date();
